@@ -92,10 +92,23 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
   // SMALL ANGLE GYRO INTEGRATION:
   // (replace the code below)
   // make sure you comment it out when you add your own code -- otherwise e.g. you might integrate yaw twice
+  
+  //phi = rollEst
+  //theta = pitchEst
+  Mat3x3F M = Mat3x3F::Zeros();
+  M(0,0) = 1;
+  M(0,1) = sin(rollEst) * tan(pitchEst);
+  M(0,2) = cos(rollEst) * tan(pitchEst);
+  M(1,1) = cos(rollEst);
+  M(1,2) = -sin(rollEst);
+  M(2,1) = sin(rollEst) / cos(pitchEst);
+  M(2,2) = cos(rollEst) / cos(pitchEst);
+  
+  V3F angle_dot = M * gyro;
 
-  float predictedPitch = pitchEst + dtIMU * gyro.y;
-  float predictedRoll = rollEst + dtIMU * gyro.x;
-  ekfState(6) = ekfState(6) + dtIMU * gyro.z;	// yaw
+  float predictedPitch = pitchEst + dtIMU * angle_dot.y;
+  float predictedRoll = rollEst + dtIMU * angle_dot.x;
+  ekfState(6) = ekfState(6) + dtIMU * angle_dot.z;	// yaw
 
   // normalize yaw to -pi .. pi
   if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
