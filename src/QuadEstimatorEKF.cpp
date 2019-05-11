@@ -93,22 +93,23 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
   // (replace the code below)
   // make sure you comment it out when you add your own code -- otherwise e.g. you might integrate yaw twice
   
-  //phi = rollEst
-  //theta = pitchEst
+  float phi = rollEst;
+  float theta = pitchEst;
+  
   Mat3x3F M = Mat3x3F::Zeros();
   M(0,0) = 1;
-  M(0,1) = sin(rollEst) * tan(pitchEst);
-  M(0,2) = cos(rollEst) * tan(pitchEst);
-  M(1,1) = cos(rollEst);
-  M(1,2) = -sin(rollEst);
-  M(2,1) = sin(rollEst) / cos(pitchEst);
-  M(2,2) = cos(rollEst) / cos(pitchEst);
+  M(0,1) = sin(phi) * tan(theta);
+  M(0,2) = cos(phi) * tan(theta);
+  M(1,1) = cos(phi);
+  M(1,2) = -sin(phi);
+  M(2,1) = sin(phi) / cos(theta);
+  M(2,2) = cos(phi) / cos(theta);
   
   V3F angle_dot = M * gyro;
 
   float predictedPitch = pitchEst + dtIMU * angle_dot.y;
   float predictedRoll = rollEst + dtIMU * angle_dot.x;
-  ekfState(6) = ekfState(6) + dtIMU * angle_dot.z;	// yaw
+  ekfState(6) +=  dtIMU * angle_dot.z;	// yaw
 
   // normalize yaw to -pi .. pi
   if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
@@ -301,7 +302,10 @@ void QuadEstimatorEKF::UpdateFromGPS(V3F pos, V3F vel)
   //  - The GPS measurement covariance is available in member variable R_GPS
   //  - this is a very simple update
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-
+  for(int i=0; i<6; i++) {
+    zFromX(i) = ekfState(i);
+    hPrime(i,i) = 1.f;
+  }
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   Update(z, hPrime, R_GPS, zFromX);
